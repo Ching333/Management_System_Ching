@@ -6,6 +6,7 @@
 import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from './mixins/resize'
+import { get_tag_count } from '@/api/user'
 
 const animationDuration = 6000
 
@@ -27,7 +28,10 @@ export default {
   },
   data() {
     return {
-      chart: null
+      chart: null,
+      tagCountTop10:null,
+      tagCountTop10Count:[],
+      tagCountTop10Key:[]
     }
   },
   mounted() {
@@ -45,7 +49,16 @@ export default {
   methods: {
     initChart() {
       this.chart = echarts.init(this.$el, 'macarons')
-
+      get_tag_count().then(response=>{
+      this.tagCountTop10 = response.data;
+      this.tagCountTop10Count=[];
+      this.tagCountTop10Key=[];
+      this.tagCountTop10Count=this.tagCountTop10.map(item => Object.values(item)[0]);
+      this.tagCountTop10Key=this.tagCountTop10.map(item => Object.values(item)[1])
+       //console.log(Object.values(this.listUserGrowthKey))
+       const datas={key:this.tagCountTop10Key,count:this.tagCountTop10Count}
+       return datas
+      }).then(result=>{
       this.chart.setOption({
         tooltip: {
           trigger: 'axis',
@@ -62,7 +75,7 @@ export default {
         },
         xAxis: [{
           type: 'category',
-          data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          data: result.key,
           axisTick: {
             alignWithLabel: true
           }
@@ -74,27 +87,28 @@ export default {
           }
         }],
         series: [{
-          name: 'pageA',
+          name: '本月份',
           type: 'bar',
           stack: 'vistors',
           barWidth: '60%',
-          data: [79, 52, 200, 334, 390, 330, 220],
+          data: result.count,
           animationDuration
         }, {
-          name: 'pageB',
+          name: '前月份',
           type: 'bar',
           stack: 'vistors',
           barWidth: '60%',
-          data: [80, 52, 200, 334, 390, 330, 220],
+          data: [8,8,9,6,3,4,2,5,1,2],
           animationDuration
         }, {
-          name: 'pageC',
+          name: '預估成長',
           type: 'bar',
           stack: 'vistors',
           barWidth: '60%',
-          data: [30, 52, 200, 334, 390, 330, 220],
+          data:[6,8,5,9,7,5,2,5,1,2],
           animationDuration
         }]
+      })
       })
     }
   }

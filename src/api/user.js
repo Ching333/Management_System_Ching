@@ -27,7 +27,11 @@ export function queryUser() {
   return request({
     url: '/query/get_user_list',
     method: 'post',
-    baseURL: 'http://localhost:57680'
+    baseURL: 'http://localhost:57680',
+    headers: {
+      Authorization: 'Bearer ' + localStorage.getItem('token'),
+      user_id: localStorage.getItem('user_id')
+    }
   })
 }
 
@@ -35,13 +39,11 @@ export function userLogin(data) {
   return request({
     url: '/auth/login',
     method: 'post',
-    // credentials: 'include',
     data,
     xhrFields: {
       withCredentials: true
     },
     contentType: 'application/json',
-    // withCredentials: true,
     baseURL: 'http://localhost:57680'
   })
 }
@@ -53,7 +55,6 @@ export function userLogout() {
     xhrFields: {
       withCredentials: true
     },
-    // withCredentials: true
     contentType: 'application/json',
     baseURL: 'http://localhost:57680'
   })
@@ -62,6 +63,62 @@ export function userLogout() {
 export function userTest() {
   return request({
     url: '/auth/test',
+    method: 'post',
+    xhrFields: {
+      withCredentials: true
+    },
+    contentType: 'application/json',
+    baseURL: 'http://localhost:57680'
+  })
+}
+
+export function get_user_growth() {
+  return request({
+    url: '/query/get_user_growth',
+    method: 'post',
+    xhrFields: {
+      withCredentials: true
+    },
+    contentType: 'application/json',
+    baseURL: 'http://localhost:57680'
+  })
+}
+export function get_all_data() {
+  return request({
+    url: '/query/get_all_data_count',
+    method: 'post',
+    xhrFields: {
+      withCredentials: true
+    },
+    contentType: 'application/json',
+    baseURL: 'http://localhost:57680'
+  })
+}
+export function get_tag_count() {
+  return request({
+    url: '/query/get_tag_count',
+    method: 'post',
+    xhrFields: {
+      withCredentials: true
+    },
+    contentType: 'application/json',
+    baseURL: 'http://localhost:57680'
+  })
+}
+export function get_tag_event_count() {
+  return request({
+    url: '/query/get_tag_event_count',
+    method: 'post',
+    xhrFields: {
+      withCredentials: true
+    },
+    contentType: 'application/json',
+    baseURL: 'http://localhost:57680'
+  })
+}
+export function get_place_tag_count() {
+  return request({
+    url: '/query/get_place_tag_count',
     method: 'post',
     xhrFields: {
       withCredentials: true

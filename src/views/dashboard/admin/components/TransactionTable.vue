@@ -1,19 +1,19 @@
 <template>
   <el-table :data="list" style="width: 100%;padding-top: 15px;">
-    <el-table-column label="Order_No" min-width="200">
+    <el-table-column label="標籤名稱" width="170">
       <template slot-scope="scope">
-        {{ scope.row.order_no | orderNoFilter }}
+        {{ scope.row.key | orderNoFilter }}
       </template>
     </el-table-column>
-    <el-table-column label="Price" width="195" align="center">
+    <el-table-column label="搜尋次數" width="195" align="center">
       <template slot-scope="scope">
-        ¥{{ scope.row.price | toThousandFilter }}
+        {{ scope.row.count | toThousandFilter }}
       </template>
     </el-table-column>
-    <el-table-column label="Status" width="100" align="center">
-      <template slot-scope="{row}">
-        <el-tag :type="row.status | statusFilter">
-          {{ row.status }}
+    <el-table-column label="熱門程度" width="100" align="center">
+      <template slot-scope="scope">
+        <el-tag :type="scope.row.count>3?'danger':'success'">
+          {{ scope.row.count>3?"超熱門":"熱門" }}
         </el-tag>
       </template>
     </el-table-column>
@@ -22,6 +22,7 @@
 
 <script>
 import { transactionList } from '@/api/remote-search'
+import { get_tag_event_count } from '@/api/user'
 
 export default {
   filters: {
@@ -38,7 +39,8 @@ export default {
   },
   data() {
     return {
-      list: null
+      list: null,
+      hito: false
     }
   },
   created() {
@@ -46,9 +48,13 @@ export default {
   },
   methods: {
     fetchData() {
-      transactionList().then(response => {
-        this.list = response.data.items.slice(0, 8)
-      })
+      get_tag_event_count().then(response =>{
+        this.list = response.data
+
+      }) 
+      // transactionList().then(response => {
+      //   this.list = response.data.items.slice(0, 8)
+      // })
     }
   }
 }

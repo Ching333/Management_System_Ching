@@ -3,7 +3,7 @@
     <div class="filter-container">
       <el-input v-model="listQuery.title" :placeholder="$t('placeList.searchTitle')" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.importance" :placeholder="$t('placeList.searchItem')" clearable style="width: 120px;margin-left:10px;" class="filter-item">
-        <el-option v-for="item in searchItem" :key="item" :label="item" :value="item" />
+        <el-option v-for="item in privacyOption" :key="item.key" :label="item.label" :value="item.key" />
       </el-select>
       <el-select v-model="listQuery.sort" style="width: 140px;margin-left:10px;" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
@@ -37,7 +37,7 @@
       </el-table-column>
       <el-table-column :label="$t('placeList.privacy')" width="80px">
         <template slot-scope="{row}">
-          <svg-icon v-for="n in +row.privacy+1" :key="n" icon-class="star" class="meta-item__icon" />
+          <svg-icon v-for="n in +row.privacy" :key="n" icon-class="star" class="meta-item__icon" />
         </template>
       </el-table-column>
       <el-table-column :label="$t('placeList.name')" width="110px" align="center">
@@ -79,24 +79,31 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
+    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="testList" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="40%">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="150px" style="width: 400px; margin-left:20px;">
-        <el-form-item :label="$t('placeList.userId')" prop="timestamp">
+        <!-- <el-form-item :label="$t('placeList.userId')" prop="timestamp">
           <el-input v-model="temp.user_id" disabled />
+        </el-form-item> -->
+        <el-form-item v-if="dialogStatus==='update'" :label="$t('placeList.userName')">
+          <el-input v-model="temp.user_name" :disabled="dialogStatus==='update'" />
         </el-form-item>
-        <el-form-item :label="$t('placeList.userName')" prop="timestamp">
-          <el-input v-model="temp.user_name" />
-        </el-form-item>
-        <el-form-item :label="$t('placeList.name')">
+        <el-form-item :label="$t('placeList.name')" prop="listName">
           <el-input v-model="temp.listName" />
+        </el-form-item>
+        <el-form-item :label="$t('placeList.privacy')" prop="privacy">
+          <el-select v-model="temp.privacy" class="filter-item" placeholder="Please select">
+            <el-option v-for="item in privacyOption" :key="item.key" :label="item.label" :value="item.key" />
+          </el-select>
         </el-form-item>
         <el-form-item :label="$t('placeList.description')">
           <el-input v-model="temp.description" />
         </el-form-item>
-        <el-form-item :label="$t('placeList.coverImageURL')">
-          <el-input v-model="temp.coverImageURL" :autosize="{ minRows: 2, maxRows: 4}" type="textarea" placeholder="Please input" />
+        <el-form-item v-if="dialogStatus==='create'" :label="$t('placeList.addPlace')">
+          <el-select v-model="temp.place" class="filter-item" placeholder="Please select" multiple collapse-tags>
+            <el-option v-for="item in placeSelection" :key="item.place_id" :label="item.name" :value="item.place_id" />
+          </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -113,22 +120,9 @@
 </template>
 
 <script>
-import { fetchList, createArticle, testPlaceList, updatePlaceList } from '@/api/article'
+import { createList, testPlaceList, queryPlaceSelectoin, updatePlaceList } from '@/api/article'
 import waves from '@/directive/waves' // waves directive
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-
-const calendarTypeOptions = [
-  { key: 'CN', display_name: 'China' },
-  { key: 'US', display_name: 'USA' },
-  { key: 'JP', display_name: 'Japan' },
-  { key: 'EU', display_name: 'Eurozone' }
-]
-
-// arr to obj, such as { CN : "China", US : "USA" }
-const calendarTypeKeyValue = calendarTypeOptions.reduce((acc, cur) => {
-  acc[cur.key] = cur.display_name
-  return acc
-}, {})
 
 export default {
   name: 'PlacesListTable',
@@ -142,15 +136,13 @@ export default {
         deleted: 'danger'
       }
       return statusMap[status]
-    },
-    typeFilter(type) {
-      return calendarTypeKeyValue[type]
     }
   },
   data() {
     return {
       tableKey: 0,
       list: null,
+      placeSelection: null,
       total: 0,
       listLoading: true,
       listQuery: {
@@ -162,58 +154,61 @@ export default {
         description: undefined,
         sort: '+id'
       },
-      importanceOptions: [1, 2, 3],
-      calendarTypeOptions,
+      privacyOption: [
+        { key: 1, label: this.$t('placeList.public') },
+        { key: 2, label: this.$t('placeList.private') },
+        { key: 3, label: this.$t('placeList.hito') }
+      ],
       sortOptions: [{ label: this.$t('common.idAscending'), key: '+id' }, { label: this.$t('common.idDescending'), key: '-id' }],
       showReviewer: false,
       temp: {
         id: undefined,
         user_id: '',
         user_name: '',
+        privacy: '',
         listName: '',
         description: '',
-        coverImageURL: ''
+        coverImageURL: '',
+        place: null
+      },
+      createModel: {
+        name: '',
+        description: '',
+        privacy: undefined,
+        places: null
       },
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
         update: this.$t('placeList.edit'),
         create: this.$t('placeList.add')
-      },
-      dialogPvVisible: false,
-      pvData: [],
-      rules: {
-        type: [{ required: true, message: 'type is required', trigger: 'change' }],
-        // timestamp: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
-        title: [{ required: true, message: 'title is required', trigger: 'blur' }]
-      },
-      downloadLoading: false
+      }
+    }
+  },
+  computed: {
+    rules() {
+      const placeListRules = {
+        listName: [{ required: true, message: this.$t('member.nameRule'), trigger: 'blur' }],
+        privacy: [{ required: true, message: this.$t('member.passwordRule'), trigger: 'blur' }]
+      }
+      return placeListRules
     }
   },
   created() {
-    // this.getList()
     this.testList()
+    this.getPlaceSelection()
   },
   methods: {
-    getList() {
-      this.listLoading = true
-      fetchList(this.listQuery).then(response => {
-        // console.log(response.data)
-        // this.list = response.data.items
-        // this.total = response.data.total
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
     testList() {
       // this.listLoading = true
       testPlaceList().then(response => {
         this.list = response.data
         this.total = response.total
-        // console.log(this.total)
+      })
+    },
+    getPlaceSelection() {
+      queryPlaceSelectoin().then(response => {
+        this.placeSelection = response.data
       })
     },
     handleFilter() {
@@ -245,9 +240,17 @@ export default {
       this.temp = {
         id: undefined,
         user_id: '',
+        privacy: '',
         listName: '',
+        description: ''
+      }
+    },
+    resetCreateModel() {
+      this.createModel = {
+        name: '',
         description: '',
-        coverImageURL: ''
+        privacy: undefined,
+        places: null
       }
     },
     handleCreate() {
@@ -261,14 +264,26 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          this.temp.id = parseInt(Math.random() * 100) + 1024 // mock a id
-          this.temp.author = 'vue-element-admin'
-          createArticle(this.temp).then(() => {
-            this.list.unshift(this.temp)
+          this.createModel.name = this.temp.listName
+          this.createModel.description = this.temp.description
+          this.createModel.privacy = this.temp.privacy
+          this.createModel.places = this.temp.place
+          this.temp.id = this.total + 1
+          var today = new Date()
+          var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate()
+          var time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds()
+          this.temp.createdTime = date + ' ' + time
+          this.temp.user_id = 1
+          this.temp.user_name = 'Khito'
+          // console.log(this.temp)
+          // console.log(this.createModel)
+          createList(this.createModel).then(() => {
+            this.list.push(this.temp)
             this.dialogFormVisible = false
+            this.testList()
             this.$notify({
               title: '成功',
-              message: '创建成功',
+              message: '建立成功',
               type: 'success',
               duration: 2000
             })
@@ -277,7 +292,7 @@ export default {
       })
     },
     handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
+      this.temp = Object.assign({}, row)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {

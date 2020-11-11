@@ -6,7 +6,7 @@
         <el-option v-for="item in searchItem" :key="item" :label="item" :value="item" />
       </el-select>
       <el-select v-model="listQuery.type" :placeholder="$t('member.memberStatus')" clearable class="filter-item" style="width: 130px;margin-left:10px;">
-        <el-option v-for="item in memberAuthority" :key="item.value" :label="item.label" :value="item.value" />
+        <el-option v-for="item in setOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-select v-model="listQuery.sort" style="width: 140px;margin-left:10px;" class="filter-item" @change="handleFilter">
         <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
@@ -62,10 +62,10 @@
           <span>{{ row.updatedTime }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('member.authority')" class-name="status-col" width="100">
+      <el-table-column :label="$t('member.authority')" class-name="status-col" width="120">
         <template slot-scope="{row}">
           <el-tag :type="row.authority | statusFilter">
-            {{ row.authority }}
+            <span>{{ authorityText[row.authority].name }}</span>
           </el-tag>
         </template>
       </el-table-column>
@@ -81,25 +81,28 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
+    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getUserList" />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="30%">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="80px" style="width: 280px; margin-left:20px;">
-        <el-form-item :label="$t('member.name')" prop="title">
+        <el-form-item :label="$t('member.name')" prop="name">
           <el-input v-model="temp.name" />
         </el-form-item>
-        <el-form-item :label="$t('member.password')" prop="title">
+        <el-form-item v-if="dialogStatus==='create'" :label="$t('member.email')" prop="email">
+          <el-input v-model="temp.email" />
+        </el-form-item>
+        <el-form-item :label="$t('member.password')" prop="password">
           <el-input v-model="temp.password" />
         </el-form-item>
-        <el-form-item :label="$t('member.authority')" prop="type">
+        <el-form-item v-if="dialogStatus==='update'" :label="$t('member.authority')" prop="authority">
           <el-select v-model="temp.authority" class="filter-item" placeholder="Please select">
-            <el-option v-for="item in memberAuthority" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in setOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('member.created')">
+        <el-form-item v-if="dialogStatus==='update'" :label="$t('member.created')">
           <el-input v-model="temp.createdTime" disabled />
         </el-form-item>
-        <el-form-item :label="$t('member.updated')">
+        <el-form-item v-if="dialogStatus==='update'" :label="$t('member.updated')">
           <el-input v-model="temp.updatedTime" disabled />
         </el-form-item>
       </el-form>
@@ -112,38 +115,14 @@
         </el-button>
       </div>
     </el-dialog>
-
-    <el-dialog :visible.sync="dialogPvVisible" title="Reading statistics">
-      <el-table :data="pvData" border fit highlight-current-row style="width: 100%">
-        <el-table-column prop="key" label="Channel" />
-        <el-table-column prop="pv" label="Pv" />
-      </el-table>
-      <span slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="dialogPvVisible = false">{{ $t('table.confirm') }}</el-button>
-      </span>
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { fetchList, fetchPv, createArticle, updateArticle } from '@/api/article'
+import { createMember, updateMember } from '@/api/article'
 import { queryUser } from '@/api/user'
 import waves from '@/directive/waves' // waves directive
-import { parseTime } from '@/utils'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
-
-const calendarTypeOptions = [
-  { key: 'CN', display_name: 'China' },
-  { key: 'US', display_name: 'USA' },
-  { key: 'JP', display_name: 'Japan' },
-  { key: 'EU', display_name: 'Eurozone' }
-]
-
-// arr to obj, such as { CN : "China", US : "USA" }
-const calendarTypeKeyValue = calendarTypeOptions.reduce((acc, cur) => {
-  acc[cur.key] = cur.display_name
-  return acc
-}, {})
 
 export default {
   name: 'ComplexTable',
@@ -157,9 +136,6 @@ export default {
         2: 'danger'
       }
       return statusMap[status]
-    },
-    typeFilter(type) {
-      return calendarTypeKeyValue[type]
     }
   },
   data() {
@@ -177,22 +153,7 @@ export default {
         sort: '+id'
       },
       searchItem: [this.$t('member.name'), this.$t('member.email')],
-      memberAuthority: [
-        {
-          value: 0,
-          label: this.$t('member.administrator')
-        },
-        {
-          value: 1,
-          label: this.$t('member.normal')
-        },
-        {
-          value: 2,
-          label: this.$t('member.deleted')
-        }
-      ],
       sortOptions: [{ label: this.$t('common.idAscending'), key: '+id' }, { label: this.$t('common.idDescending'), key: '-id' }],
-      statusOptions: ['published', 'draft', 'deleted'],
       showReviewer: false,
       temp: {
         id: undefined,
@@ -203,59 +164,59 @@ export default {
         createdTime: '',
         updatedTime: ''
       },
+      createModel: {
+        username: '',
+        email: '',
+        password: ''
+      },
       dialogFormVisible: false,
       dialogStatus: '',
       textMap: {
         update: this.$t('member.edit'),
         create: this.$t('member.add')
-      },
-      dialogPvVisible: false,
-      pvData: [],
-      rules: {
-        type: [{ required: true, message: 'type is required', trigger: 'change' }],
-        timestamp: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
-        title: [{ required: true, message: 'title is required', trigger: 'blur' }]
-      },
-      downloadLoading: false
+      }
     }
   },
-  watch: {
-    lang() {
-      this.setOptions()
+  computed: {
+    authorityText() {
+      const memberAuthority = {
+        0: { name: this.$t('member.administrator') },
+        1: { name: this.$t('member.normal') },
+        2: { name: this.$t('member.blackList') }
+      }
+      return memberAuthority
+    },
+    rules() {
+      const memberRules = {
+        name: [{ required: true, message: this.$t('member.nameRule'), trigger: 'blur' }],
+        email: [{ required: true, message: this.$t('member.passwordRule'), trigger: 'blur' }],
+        password: [{ required: true, message: this.$t('member.passwordRule'), trigger: 'blur' }],
+        authority: [{ required: true, message: this.$t('member.authorityRule'), trigger: 'change' }]
+      }
+      return memberRules
+    },
+    setOptions() {
+      const memberAuthority = [
+        {
+          value: 0,
+          label: this.$t('member.administrator')
+        },
+        {
+          value: 1,
+          label: this.$t('member.normal')
+        },
+        {
+          value: 2,
+          label: this.$t('member.blackList')
+        }
+      ]
+      return memberAuthority
     }
   },
   created() {
     this.getUserList()
   },
   methods: {
-    setOptions() {
-      this.memberAuthority = [
-        {
-          value: 'administrator',
-          label: this.$t('member.administrator')
-        },
-        {
-          value: 'normal',
-          label: this.$t('member.normal')
-        },
-        {
-          value: 'deleted',
-          label: this.$t('member.deleted')
-        }
-      ]
-    },
-    getList() {
-      this.listLoading = true
-      fetchList(this.listQuery).then(response => {
-        // this.list = response.data.items
-        // this.total = response.data.total
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
-      })
-    },
     getUserList() {
       queryUser().then(response => {
         this.list = response.data
@@ -278,6 +239,7 @@ export default {
       row.status = status
     },
     sortChange(data) {
+      // console.log(data) //{column: {…}, prop: "id", order: "ascending"}
       const { prop, order } = data
       if (prop === 'id') {
         this.sortByID(order)
@@ -294,16 +256,24 @@ export default {
     resetTemp() {
       this.temp = {
         id: undefined,
-        importance: 1,
-        remark: '',
-        timestamp: new Date(),
-        title: '',
-        status: 'published',
-        type: ''
+        name: '',
+        email: '',
+        password: '',
+        authority: '',
+        createdTime: '',
+        updatedTime: ''
+      }
+    },
+    resetCreateModel() {
+      this.createModel = {
+        username: '',
+        email: '',
+        password: ''
       }
     },
     handleCreate() {
       this.resetTemp()
+      this.resetCreateModel()
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -313,14 +283,22 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          this.temp.id = parseInt(Math.random() * 100) + 1024 // mock a id
-          this.temp.author = 'vue-element-admin'
-          createArticle(this.temp).then(() => {
-            this.list.unshift(this.temp)
+          this.createModel.username = this.temp.name
+          this.createModel.email = this.temp.email
+          this.createModel.password = this.temp.password
+          this.temp.id = this.total + 1
+          var today = new Date()
+          var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate()
+          var time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds()
+          this.temp.createdTime = date + ' ' + time
+          this.temp.authority = 1
+          createMember(this.createModel).then(() => {
+            this.list.push(this.temp)
+            this.getUserList()
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
-              message: '创建成功',
+              message: '新增成功',
               type: 'success',
               duration: 2000
             })
@@ -329,7 +307,7 @@ export default {
       })
     },
     handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
+      this.temp = Object.assign({}, row)
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.$nextTick(() => {
@@ -340,7 +318,7 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
-          updateArticle(tempData).then(() => {
+          updateMember(tempData).then(() => {
             const index = this.list.findIndex(v => v.id === this.temp.id)
             this.list.splice(index, 1, this.temp)
             this.dialogFormVisible = false
@@ -350,6 +328,7 @@ export default {
               type: 'success',
               duration: 2000
             })
+            this.getUserList()
           })
         }
       })
@@ -362,35 +341,6 @@ export default {
         duration: 2000
       })
       this.list.splice(index, 1)
-    },
-    handleFetchPv(pv) {
-      fetchPv(pv).then(response => {
-        this.pvData = response.data.pvData
-        this.dialogPvVisible = true
-      })
-    },
-    handleDownload() {
-      this.downloadLoading = true
-      import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['timestamp', 'title', 'type', 'importance', 'status']
-        const filterVal = ['timestamp', 'title', 'type', 'importance', 'status']
-        const data = this.formatJson(filterVal)
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: 'table-list'
-        })
-        this.downloadLoading = false
-      })
-    },
-    formatJson(filterVal) {
-      return this.list.map(v => filterVal.map(j => {
-        if (j === 'timestamp') {
-          return parseTime(v[j])
-        } else {
-          return v[j]
-        }
-      }))
     },
     getSortClass: function(key) {
       const sort = this.listQuery.sort

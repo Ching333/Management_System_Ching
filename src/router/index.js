@@ -187,11 +187,11 @@ export const asyncRoutes = [
         }
       },
       {
-        path: 'session-test-ching',
-        component: () => import('@/views/permission/session-test-ching'),
-        name: 'session-test-ching',
+        path: 'session-test-empty',
+        component: () => import('@/views/permission/session-test-empty'),
+        name: 'session-test-empty',
         meta: {
-          title: 'session-test-ching'
+          title: 'session-test-empty'
         }
       }
     ]

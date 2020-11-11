@@ -133,9 +133,14 @@ export default {
     add: 'Create',
     edit: 'Edit',
     delete: 'Delete',
+    blackList: 'Black List',
     administrator: 'Administrator',
     normal: 'Normal',
-    deleted: 'Deleted'
+    deleted: 'Deleted',
+    nameRule: 'Name is required',
+    emailRule: 'Email is required',
+    passwordRule: 'Password is required',
+    authorityRule: 'Authority is required'
   },
   tag: {
     searchTitle: 'Search',
@@ -175,11 +180,15 @@ export default {
     userId: 'User ID',
     userName: 'User Name',
     privacy: 'Privacy',
+    public: 'Public',
+    private: 'Private',
+    hito: 'Hito',
     name: 'List Name',
     description: 'Description',
     coverImageURL: 'Cover Image URL',
     createdTime: 'Create Time',
     updatedTime: 'Update Time',
+    addPlace: 'Add place',
     add: 'Create',
     edit: 'Edit',
     delete: 'Delete'

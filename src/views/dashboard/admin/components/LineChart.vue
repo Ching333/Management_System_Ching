@@ -6,6 +6,7 @@
 import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from './mixins/resize'
+import { get_user_growth } from '@/api/user'
 
 export default {
   mixins: [resize],
@@ -33,7 +34,11 @@ export default {
   },
   data() {
     return {
-      chart: null
+      chart: null,
+      listUserGrowth: [],
+      listUserGrowthKey: [],
+      listUserGrowthCount: [],
+      
     }
   },
   watch: {
@@ -61,10 +66,23 @@ export default {
       this.chart = echarts.init(this.$el, 'macarons')
       this.setOptions(this.chartData)
     },
-    setOptions({ expectedData, actualData } = {}) {
-      this.chart.setOption({
+    setOptions({ expectedData, actualData } = {}) {get_user_growth().then(response=>{
+      this.listUserGrowth = response.data;
+      this.listUserGrowthCount=[];
+      this.listUserGrowthKey=[];
+      this.listUserGrowthCount=this.listUserGrowth.map(item => Object.values(item)[0]);
+      this.listUserGrowthKey=this.listUserGrowth.map(item => Object.values(item)[1])
+       //console.log(Object.values(this.listUserGrowthKey))
+       const datas={key:this.listUserGrowthKey,count:this.listUserGrowthCount}
+       return datas
+          }).then(result=>{
+  
+       this.chart.setOption({
         xAxis: {
-          data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        //data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          //data:Object.values(this.listUserGrowthKey),
+          //data:["2020-10-27", "2020-11-06", "2020-11-09", "noDateInfo"],
+          data:result.key,
           boundaryGap: false,
           axisTick: {
             show: false
@@ -104,7 +122,7 @@ export default {
           },
           smooth: true,
           type: 'line',
-          data: expectedData,
+          data: result.count,
           animationDuration: 2800,
           animationEasing: 'cubicInOut'
         },
@@ -124,12 +142,12 @@ export default {
               }
             }
           },
-          data: actualData,
+          data: result.count,
           animationDuration: 2800,
           animationEasing: 'quadraticOut'
         }]
       })
-    }
+         })}
   }
 }
 </script>

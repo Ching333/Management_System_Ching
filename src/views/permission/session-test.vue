@@ -19,7 +19,8 @@
     <el-button @click="handleLogin">Log In</el-button>
     <el-button @click="handleLogout">Log Out</el-button>
     <el-button @click="handleTest">Test</el-button>
-    <el-button @click="handleTest2">Test2</el-button>
+    <el-button @click="getUserGrowth">getUserGrowth</el-button>
+    
   </div>
 </template>
 
@@ -28,7 +29,7 @@
 // import { deepClone } from '@/utils'
 // import { getRoutes, getRoles, addRole, deleteRole, updateRole } from '@/api/role'
 // import i18n from '@/lang'
-import { userLogin } from '@/api/user'
+import { userLogout, userLogin,get_user_growth } from '@/api/user'
 import axios from 'axios'
 
 const service = axios.create({
@@ -67,17 +68,20 @@ export default {
         label: 'title'
       },
       temp: {
-        account: '',
-        password: ''
+        account: 'test',
+        password: 'test'
+      },
+      listUserGrowthKey: [],
+      listUserGrowthCount: [],
+      listUserGrowth: null
       }
-    }
   },
   computed: {
   },
   created() {
     // Mock: get all routes and roles list from server
-    this.getRoutes()
-    this.getRoles()
+    // this.getRoutes()
+    // this.getRoles()
   },
   methods: {
     confirmRole() {
@@ -101,90 +105,71 @@ export default {
         })
       })
     },
-    // handleLogin() {
-    //   const tempData = Object.assign({}, this.temp)
-    //   console.log(this.temp)
-    //   axios({
-    //     method: 'post',
-    //     baseURL: 'http://localhost:57680',
-    //     url: '/auth/login',
-    //     tempData,
-    //     headers: { 'Content-Type':'application/json',
-    //     'credentials':'include'}
-    //   })
-    //     .then((response) => { console.log(response) })
-    // },
     handleLogin() {
       const tempData = Object.assign({}, this.temp)
       console.log(this.temp)
-      axios.post('http://localhost:57680/auth/login',
-        tempData, { withCredentials: true })
+      axios.post('http://localhost:57680/token/login',
+        tempData)
         .then((response) => {
-          console.log('response', response.headers)
-          // if (response.data.Result === true) {
-          //   localStorage.setItem('token', response.data.token)
-          //   localStorage.setItem('user_id', response.data.user_id)
-          //   this.$notify({
-          //     title: '成功',
-          //     message: '登入成功',
-          //     type: 'success',
-          //     duration: 2000
-          //   })
-          // } else {
-          //   alert('Wrong Account and Password')
+          console.log('response', response)
+          if (response.data.Result === true) {
+            localStorage.setItem('token', response.data.token)
+            localStorage.setItem('user_id', response.data.user_id)
+            this.$notify({
+              title: '成功',
+              message: '登入成功',
+              type: 'success',
+              duration: 2000
+            })
+          } else {
+            alert('Wrong Account and Password')
+          }
         })
     },
     handleLogout() {
-      axios.post('http://localhost:57680/auth/logout', {}, { withCredentials: true })
-        .then((response) => {
-          console.log('response', response)
+      userLogout().then(() => {
+        console.log('log out')
+        this.$notify({
+          title: '成功',
+          message: '登出成功',
+          type: 'success',
+          duration: 2000
         })
-      // userLogout().then(() => {
-      //   console.log('log out')
-      //   this.$notify({
-      //     title: '成功',
-      //     message: '登出成功',
-      //     type: 'success',
-      //     duration: 2000
-      //   })
-      // })
+      })
     },
     handleTest() {
-      axios.post('http://localhost:57680/auth/test', {}, { withCredentials: true })
-        .then((response) => {
-          console.log('response', response)
-        })
-      // userLogout().then(() => {
-      //   console.log('log out')
-      //   this.$notify({
-      //     title: '成功',
-      //     message: '登出成功',
-      //     type: 'success',
-      //     duration: 2000
-      //   })
-      // })
-      // axios({
-      //   method: 'post',
-      //   url: '/auth/test',
-      //   headers: { 'Content-Type': 'application/json',
-      //     'credentials': 'include' }
-      // })
-      //   .then((result) => { console.log(result.headers) })
-    }
+      axios({
+        method: 'post',
+        url: '/auth/test',
+        'Content-Type': 'application/json'
+      })
+        .then((result) => { console.log(result.headers) })
+    },
+    getUserGrowth(){
+    get_user_growth().then(response=>
+    {
+      this.listUserGrowth = response.data;
+      this.listUserGrowthCount=[];
+      this.listUserGrowthKey=[];
+      this.listUserGrowthCount=(Object.values(this.listUserGrowth).map(item => item.count));
+      this.listUserGrowthKey=Object.values(this.listUserGrowth).map(item => item.key);
+      // this.listUserGrowthCount=this.listUserGrowth.map(item => Object.values(item)[0]);
+      // this.listUserGrowthKey=this.listUserGrowth.map(item => Object.values(item)[1])
+      // this.listUserGrowth.forEach( element=> {
+      //   console.log( 'element:'+element);
+      //   this.listUserGrowthCount.push( element.count);
+      //   this.listUserGrowthKey.push( element.key); } );
+     
+      console.log('listUserGrowth:'+this.listUserGrowth);
+      console.log(typeof(this.listUserGrowth));
+      console.log('listUserGrowthKey:'+this.listUserGrowthKey);
+      console.log(typeof(this.listUserGrowthKey));
+      console.log(Object.values(this.listUserGrowthKey));
+      console.log('listUserGrowthCount:'+this.listUserGrowthCount);
+    })
+    },
   }
 }
-//  const tempData = {account:"test",password:"test"};
-//  function handleTest2(){
-//       fetch('http://localhost:57680/auth/login', {
-//       credentials: 'include',
-//       method: 'POST',
-//       headers:{
-//        'Content-Type' : 'application/json'
-//       },
-//       body: JSON.stringify(tempData)
-//       })
-//       .then((result)=> { console.log(result.headers) })
-//     }
 </script>
 
 <style lang="scss" scoped>

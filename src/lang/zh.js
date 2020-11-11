@@ -126,7 +126,11 @@ export default {
     delete: '刪除',
     administrator: '管理員',
     normal: '一般身分',
-    deleted: '已刪會員'
+    blackList: '黑名單',
+    nameRule: '此項目必填',
+    emailRule: '此項目必填',
+    passwordRule: '此項目必填',
+    authorityRule: '此項目必填'
   },
   tag: {
     searchTitle: '請輸入項目',
@@ -166,11 +170,15 @@ export default {
     userId: '使用者 ID',
     userName: '作者名稱',
     privacy: '開放權限',
+    public: '公開',
+    private: '非公開',
+    hito: '熱門',
     name: '清單名稱',
     description: '描述',
     coverImageURL: '封面圖片網址',
     createdTime: '建立時間',
     updatedTime: '更新時間',
+    addPlace: '加入地點',
     add: '新增',
     edit: '編輯',
     delete: '刪除'
