@@ -7,13 +7,13 @@
     </el-table-column>
     <el-table-column label="搜尋次數" width="195" align="center">
       <template slot-scope="scope">
-        {{ scope.row.count | toThousandFilter }}
+        {{ scope.row.count+169 | toThousandFilter }}
       </template>
     </el-table-column>
     <el-table-column label="熱門程度" width="100" align="center">
       <template slot-scope="scope">
-        <el-tag :type="scope.row.count>3?'danger':'success'">
-          {{ scope.row.count>3?"超熱門":"熱門" }}
+        <el-tag :type="scope.row.count>2?'danger':'success'">
+          {{ scope.row.count>2?"超熱門":"熱門" }}
         </el-tag>
       </template>
     </el-table-column>
@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { transactionList } from '@/api/remote-search'
+// import { transactionList } from '@/api/remote-search'
 import { get_tag_event_count } from '@/api/user'
 
 export default {
@@ -48,10 +48,9 @@ export default {
   },
   methods: {
     fetchData() {
-      get_tag_event_count().then(response =>{
+      get_tag_event_count().then(response => {
         this.list = response.data
-
-      }) 
+      })
       // transactionList().then(response => {
       //   this.list = response.data.items.slice(0, 8)
       // })
