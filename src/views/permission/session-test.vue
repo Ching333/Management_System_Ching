@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-form :model="role" label-width="80px" label-position="left">
       <el-form-item label="Name">
-        <el-input v-model="temp.account" />
+        <el-input v-model="temp.email" />
       </el-form-item>
       <el-form-item label="Password">
         <el-input v-model="temp.password" />
@@ -20,7 +20,7 @@
     <el-button @click="handleLogout">Log Out</el-button>
     <el-button @click="handleTest">Test</el-button>
     <el-button @click="getUserGrowth">getUserGrowth</el-button>
-    
+
   </div>
 </template>
 
@@ -29,7 +29,7 @@
 // import { deepClone } from '@/utils'
 // import { getRoutes, getRoles, addRole, deleteRole, updateRole } from '@/api/role'
 // import i18n from '@/lang'
-import { userLogout, userLogin,get_user_growth } from '@/api/user'
+import { userLogout, userLogin, get_user_growth } from '@/api/user'
 import axios from 'axios'
 
 const service = axios.create({
@@ -74,7 +74,7 @@ export default {
       listUserGrowthKey: [],
       listUserGrowthCount: [],
       listUserGrowth: null
-      }
+    }
   },
   computed: {
   },
@@ -145,29 +145,28 @@ export default {
       })
         .then((result) => { console.log(result.headers) })
     },
-    getUserGrowth(){
-    get_user_growth().then(response=>
-    {
-      this.listUserGrowth = response.data;
-      this.listUserGrowthCount=[];
-      this.listUserGrowthKey=[];
-      this.listUserGrowthCount=(Object.values(this.listUserGrowth).map(item => item.count));
-      this.listUserGrowthKey=Object.values(this.listUserGrowth).map(item => item.key);
-      // this.listUserGrowthCount=this.listUserGrowth.map(item => Object.values(item)[0]);
-      // this.listUserGrowthKey=this.listUserGrowth.map(item => Object.values(item)[1])
-      // this.listUserGrowth.forEach( element=> {
-      //   console.log( 'element:'+element);
-      //   this.listUserGrowthCount.push( element.count);
-      //   this.listUserGrowthKey.push( element.key); } );
-     
-      console.log('listUserGrowth:'+this.listUserGrowth);
-      console.log(typeof(this.listUserGrowth));
-      console.log('listUserGrowthKey:'+this.listUserGrowthKey);
-      console.log(typeof(this.listUserGrowthKey));
-      console.log(Object.values(this.listUserGrowthKey));
-      console.log('listUserGrowthCount:'+this.listUserGrowthCount);
-    })
-    },
+    getUserGrowth() {
+      get_user_growth().then(response => {
+        this.listUserGrowth = response.data
+        this.listUserGrowthCount = []
+        this.listUserGrowthKey = []
+        this.listUserGrowthCount = (Object.values(this.listUserGrowth).map(item => item.count))
+        this.listUserGrowthKey = Object.values(this.listUserGrowth).map(item => item.key)
+        // this.listUserGrowthCount=this.listUserGrowth.map(item => Object.values(item)[0]);
+        // this.listUserGrowthKey=this.listUserGrowth.map(item => Object.values(item)[1])
+        // this.listUserGrowth.forEach( element=> {
+        //   console.log( 'element:'+element);
+        //   this.listUserGrowthCount.push( element.count);
+        //   this.listUserGrowthKey.push( element.key); } );
+
+        console.log('listUserGrowth:' + this.listUserGrowth)
+        console.log(typeof (this.listUserGrowth))
+        console.log('listUserGrowthKey:' + this.listUserGrowthKey)
+        console.log(typeof (this.listUserGrowthKey))
+        console.log(Object.values(this.listUserGrowthKey))
+        console.log('listUserGrowthCount:' + this.listUserGrowthCount)
+      })
+    }
   }
 }
 </script>
