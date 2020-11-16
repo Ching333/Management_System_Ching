@@ -85,6 +85,7 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="30%">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="80px" style="width: 280px; margin-left:20px;">
+        <el-button type="success" plain style="opacity: 0" @click="demoTemp">Demo</el-button>
         <el-form-item :label="$t('member.name')" prop="name">
           <el-input v-model="temp.name" />
         </el-form-item>
@@ -98,7 +99,7 @@
           <el-select v-model="temp.authority" class="filter-item" placeholder="Please select">
             <el-option v-for="item in setOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
-          <el-button v-if="temp.authority===2" @click="handleSendEmail">Send Email</el-button>
+          <el-button v-if="temp.authority===2" type="danger" plain @click="handleSendEmail">Send Email</el-button>
         </el-form-item>
         <el-form-item v-if="dialogStatus==='update'" :label="$t('member.created')">
           <el-input v-model="temp.createdTime" disabled />
@@ -265,6 +266,11 @@ export default {
         createdTime: '',
         updatedTime: ''
       }
+    },
+    demoTemp() {
+      this.temp.name = 'Mike'
+      this.temp.email = 'Mike@khito.co'
+      this.temp.password = 'Mike1234'
     },
     resetCreateModel() {
       this.createModel = {
