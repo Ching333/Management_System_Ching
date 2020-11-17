@@ -30,7 +30,10 @@ export default {
   data() {
     return {
       chart: null,
-      res: null
+      res: null,
+      listCount: 0,
+      tagCount: 0,
+      placeCount: 0
     }
   },
   mounted() {
@@ -55,15 +58,13 @@ export default {
       }())
       userEventCount().then(response => {
         this.res = response.data
-        var listCount = 0
-        var tagCount = 0
-        var placeCount = 0
-        if (!this.res) {
-          listCount = this.res[0].count
-          placeCount = this.res[1].count
-          tagCount = this.res[2].count
+        // console.log(this.res)
+        if (this.res.length) {
+          this.listCount = this.res[0].count
+          this.placeCount = this.res[1].count
+          this.tagCount = this.res[2].count
         }
-        console.log(this.res)
+
         this.chart.setOption({
           backgroundColor: '#344b58',
           title: {
@@ -195,7 +196,7 @@ export default {
                 }
               }
             },
-            data: [(listCount) + 709, (listCount) + 1917, (listCount) + 2455]
+            data: [(this.listCount) + 709, (this.listCount) + 1917, (this.listCount) + 2455]
           // [
           //   709,
           //   1917,
@@ -229,7 +230,7 @@ export default {
                 }
               }
             },
-            data: [(placeCount) + 327, (placeCount) + 1776, (placeCount) + 507]
+            data: [(this.placeCount) + 327, (this.placeCount) + 1776, (this.placeCount) + 507]
           // [
           //   327,
           //   1776,
@@ -263,7 +264,7 @@ export default {
                 }
               }
             },
-            data: [(tagCount) + 1036, (tagCount) + 3693, (tagCount) + 2962]
+            data: [(this.tagCount) + 1036, (this.tagCount) + 3693, (this.tagCount) + 2962]
           // [
           //   1036,
           //   3693,
